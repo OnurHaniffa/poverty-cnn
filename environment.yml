@@ -1,0 +1,68 @@
+name: poverty-cnn
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - python=3.11
+  - pip
+
+  # Core ML
+  - pytorch::pytorch>=2.1
+  - pytorch::torchvision
+
+  # Geospatial
+  - conda-forge::rasterio
+  - conda-forge::geopandas
+  - conda-forge::shapely
+  - conda-forge::pyproj
+  - conda-forge::gdal
+
+  # Data
+  - pandas
+  - numpy
+  - scipy
+  - scikit-learn
+
+  # Plotting
+  - matplotlib
+  - seaborn
+
+  # Hyperparameter search
+  - optuna
+
+  # Logging
+  - tensorboard
+
+  # Notebooks
+  - jupyter
+  - ipykernel
+
+  # Testing
+  - pytest
+
+  # Utilities
+  - tqdm
+  - pyyaml
+  - rich
+
+  # Pip-only deps
+  - pip:
+    - earthengine-api
+    - wilds
+    - grad-cam
+    - python-dotenv
+
+# NOTES:
+#
+# 1. PyTorch will install with CPU support by default. On the school GPU server,
+#    after `conda env create`, replace the PyTorch package with the CUDA build:
+#
+#       conda install pytorch pytorch-cuda=12.1 -c pytorch -c nvidia --force-reinstall
+#
+#    (Adjust CUDA version to match your server's drivers.)
+#
+# 2. On Apple Silicon, PyTorch automatically uses MPS (Metal) for GPU acceleration.
+#    No additional steps needed.
+#
+# 3. GDAL is installed via conda-forge to avoid the well-known pip install pain.
+#    rasterio and geopandas pick it up automatically.

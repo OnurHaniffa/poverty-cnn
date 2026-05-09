@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.pytest_cache/
+.coverage
+.tox/
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Conda / Virtualenv
+env/
+venv/
+.venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Data — never commit raw or processed data
+data/raw/
+data/processed/
+*.npy
+*.npz
+*.pt
+*.pth
+*.h5
+*.hdf5
+
+# Model checkpoints and predictions
+results/checkpoints/
+results/predictions/
+results/figures/
+*.ckpt
+
+# Logging
+runs/
+wandb/
+lightning_logs/
+tb_logs/
+
+# Earth Engine credentials
+.config/earthengine/
+credentials.json
+
+# DHS data (proprietary even after registration — never commit)
+*.DTA
+*.dta
+*.SAV
+*.sav
+
+# Secrets
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
