@@ -74,3 +74,5 @@ credentials.json
 build/
 dist/
 *.egg-info/
+private/
+mamba*

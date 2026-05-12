@@ -62,3 +62,12 @@ See `docs/design.md` §11 for the full Week 3 day-by-day.
 - Earth Engine approval delay (~1 day) — submitted but awaiting
 - School server SSH access not yet configured
 - First-CNN debugging cycle ahead — expect 1–2 days of model-not-converging issues
+
+## Future work (parking lot — not for this 3-week window)
+
+- **OOD generalization test on excluded countries.** Once the 23-country model is trained, request DHS access for additional sub-Saharan countries Yeh excluded (Botswana, Namibia, Madagascar, Liberia, etc.) and run inference-only — no retraining. Report per-country r² on these as a "does the model travel?" test. South Africa is especially interesting because it's upper-middle-income and would test whether the model overfits to low-income visual features.
+- Self-supervised satellite-image pretraining (replace ImageNet pretraining with SimCLR / MAE on unlabeled Landsat).
+- Building-footprints integration (Microsoft Open Buildings or Google Open Buildings) as additional input.
+- Vision Transformer architecture replacing ResNet-18.
+- Multi-modal model fusing satellite + Open Street Map road network data.
+- Pixel-level wealth maps (the Yeh 2020 24-h imagery pipeline).

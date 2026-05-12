@@ -19,7 +19,7 @@ dependencies:
 
   # Data
   - pandas
-  - numpy
+  - numpy<2          # PyTorch 2.2.x was compiled against NumPy 1.x; pin to avoid runtime warnings
   - scipy
   - scikit-learn
 
