@@ -75,6 +75,16 @@ Plus a stretch goal: bias-amplification simulation. Full detail in `docs/design.
   - Two satellite tiles downloaded: Nairobi (urban, wealth +3.14, nighttime light = 13) vs Turkana rural (wealth −1.41, nighttime light = 0). The signal is unmistakable.
 - Committed (`79306e3`) and pushed.
 
+### Day 6–7 (May 20–21): infra unblocked, all data collected, extraction running
+- **Remote GPU access solved.** Lab PC is behind NAT with a dynamic IP, so direct SSH failed. Diagnosed it (Ubuntu 24.04, 2× Quadro P5000 16 GB), then set up **Tailscale**. Twist: the PC was already on a friend's tailnet (`1boraguvendiren@`), so the friend **node-shared** `sim-vs` to `onurhturkey@`. Now **`ssh sim` works from anywhere** (alias in `~/.ssh/config`, key auth — the key install needed `ssh-copy-id` because copy-paste mangled the long key line). RustDesk is the break-glass backup.
+- **All 23 countries' DHS data downloaded + verified** (Survey HR + GPS) into `data/raw/dhs/<CC>/`. ~13,634 clusters. Senegal is a Continuous DHS (`SN_..CONTINUOUSDHS`); the rest standard. (SL = Sierra Leone, not Senegal — easy mix-up.)
+- **Bug found + fixed:** `cluster_image` now `.toFloat()`s the 8-band stack. EE batch GeoTIFF export rejects mixed Float64/Float32 bands — only surfaced on the `toDrive` bulk path; the Day-5 direct-download tolerated it. Caught by validating on `--limit 3` before firing 1,585.
+- **Kenya extraction complete** (1,594 tiles in Drive); **full 22-country extraction launched** from the Mac (`caffeinate` background) → Drive `poverty_cnn_data` (now 100 GB Google One).
+- **OOD test countries approved + banked** (don't extract til core trained): South Africa, Namibia, Gabon, Eswatini, Madagascar, Niger, Liberia.
+- **Scope decision:** lock the core 23 single-round dataset; OOD test (project onto the *frozen* 23-country PCA axis — never re-fit) and multiple-rounds temporal analysis are Week-3 stretches.
+- **PC env:** package CDNs are painfully slow from this region (~200 KB/s); Miniconda + conda env build run overnight.
+- Built `scripts/03_download_imagery.py` (resumable, quota-aware bulk submitter) and `scripts/visualize_tile.py`; refactored `dhs.py` (semantic names, hv216 special-code fix, sign-flip pinned to `has_electricity`). Committed (`3dd0a46`, `1f11465`) + pushed.
+
 ## 7. Access / credentials status
 
 | Resource | Status | Notes |
@@ -83,7 +93,7 @@ Plus a stretch goal: bias-amplification simulation. Full detail in `docs/design.
 | Conda env | ✅ Working | `/opt/homebrew/Caskroom/miniforge/base/envs/poverty-cnn/` |
 | DHS data access | ✅ Approved, all 23 countries | login: onurhturkey@gmail.com at dhsprogram.com |
 | Earth Engine | ✅ Authenticated | project `storied-chimera-491721-i4`, noncommercial tier |
-| School GPU server | ⏳ Pending | RustDesk access exists but machine was powered off; friend asked to leave it on. SSH not yet configured. |
+| School GPU server | ✅ Reachable via `ssh sim` | Tailscale (node-shared from friend's tailnet), IP `100.101.91.62`. 2× Quadro P5000 16 GB, Ubuntu 24.04. Must be powered on; RustDesk is the backup. |
 
 ## 8. Key decisions and why
 

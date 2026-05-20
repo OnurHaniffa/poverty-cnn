@@ -10,9 +10,9 @@ See [`design.md`](design.md) for the full design and timeline, and
 | Phase | Status | Notes |
 |---|---|---|
 | Day 1 — Bootstrap | ✅ Done | Repo, env, approvals, GitHub all complete |
-| Week 1 — Data and infrastructure (May 8–15) | 🟡 In progress | Hard checkpoint May 15 (today) |
-| Week 2 — Replication and main result (May 16–22) | ⏳ Pending | Hard checkpoint May 22 |
-| Week 3 — Fairness audit + extensions + write-up (May 23–30) | ⏳ Pending | |
+| Week 1 — Data and infrastructure | ✅ Essentially done | (2026-05-21) SSH/Tailscale to GPU server ✅, all 23 countries' DHS data ✅, bulk extraction running. Remaining: dataset.py, splits.py, PC env. |
+| Week 2 — Replication and main result | 🟡 Starting | Extraction → tiles in Drive → rclone to PC → train first model |
+| Week 3 — Fairness audit + extensions + write-up | ⏳ Pending | + OOD-countries test + temporal (stretches) |
 
 ## Day 1 — bootstrap (✅ done)
 
