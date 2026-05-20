@@ -154,11 +154,18 @@ def nightlights_composite(point: ee.Geometry.Point, year: int) -> ee.Image:
 
 
 def cluster_image(lat: float, lon: float, year: int) -> ee.Image:
-    """Build the full 8-channel image for a cluster (no export yet)."""
+    """Build the full 8-channel image for a cluster (no export yet).
+
+    The combined stack is cast to a single Float32 dtype. The multispectral
+    median and the nightlights median otherwise come out as different types
+    (Float64 vs Float32), and Earth Engine's batch GeoTIFF export rejects
+    mixed-type bands. Float32 preserves the needed precision (Landsat SR
+    integers, small VIIRS radiances) and halves on-disk size vs Float64.
+    """
     point = ee.Geometry.Point([lon, lat])
     multispectral = multispectral_composite(point, year)
     nightlights = nightlights_composite(point, year)
-    return multispectral.addBands(nightlights)
+    return multispectral.addBands(nightlights).toFloat()
 
 
 def cluster_region(lat: float, lon: float) -> ee.Geometry.Polygon:

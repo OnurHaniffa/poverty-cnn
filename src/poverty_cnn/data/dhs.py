@@ -20,22 +20,25 @@ import pandas as pd
 
 # Binary asset-ownership indicators (1 = owns, 0 = doesn't).
 # DHS Recode 6 variable codes (2009+). Older rounds may have variants.
-BINARY_ASSETS = [
-    "hv206",    # has electricity
-    "hv207",    # has radio
-    "hv208",    # has TV
-    "hv209",    # has refrigerator
-    "hv210",    # has bicycle
-    "hv211",    # has motorcycle / scooter
-    "hv212",    # has car / truck
-    "hv221",    # has telephone (non-mobile / landline)
-    "hv243a",   # has mobile phone
-]
+# Mapping is `DHS code → semantic feature name`. Using semantic names downstream
+# keeps the PCA loadings readable (e.g. "has_electricity: 0.39" instead of
+# "hv206: 0.39") in WealthIndexResult.feature_names.
+BINARY_ASSETS = {
+    "hv206":  "has_electricity",
+    "hv207":  "has_radio",
+    "hv208":  "has_tv",
+    "hv209":  "has_fridge",
+    "hv210":  "has_bicycle",
+    "hv211":  "has_motorcycle",
+    "hv212":  "has_car",
+    "hv221":  "has_landline",
+    "hv243a": "has_mobile",
+}
 
 # Numeric / count variables
-COUNT_ASSETS = [
-    "hv216",    # number of rooms for sleeping
-]
+COUNT_ASSETS = {
+    "hv216": "sleeping_rooms",   # number of rooms used for sleeping
+}
 
 # Categorical variables we recode into a single binary "is improved?" feature.
 # This sidesteps country-specific ordinal scoring at the cost of some signal.
@@ -129,23 +132,29 @@ def _is_in_set(series: pd.Series, code_set: set[int]) -> pd.Series:
 def extract_asset_features(df: pd.DataFrame) -> pd.DataFrame:
     """Build the wealth-index feature matrix from a DHS HR DataFrame.
 
-    Returns one row per household, columns are the standardized asset
-    features. Missing values stay as NaN — caller imputes or drops.
+    Returns one row per household with semantically-named asset features.
+    Missing values stay as NaN — caller imputes or drops.
     """
     out = pd.DataFrame(index=df.index)
 
-    # 1. Binary asset ownership
-    for var in BINARY_ASSETS:
-        if var in df.columns:
-            out[var] = _binary_safe(df[var])
+    # 1. Binary asset ownership — emit semantically-named columns.
+    for code, name in BINARY_ASSETS.items():
+        if code in df.columns:
+            out[name] = _binary_safe(df[code])
         else:
-            out[var] = np.nan   # variable not collected in this round
+            out[name] = np.nan   # variable not collected in this round
 
-    # 2. Number of sleeping rooms (clipped at 10 to limit influence of outliers)
+    # 2. Number of sleeping rooms.
+    # DHS uses special codes (96 = "rooms not separated", 97/98 = "don't know",
+    # 99 = "missing") in addition to genuine counts. A naive `clip(0, 10)` would
+    # silently map those to 10, fabricating a "10-room household" out of a
+    # don't-know answer. We mask anything >= 25 (clearly a special code or a
+    # data-entry typo) to NaN first, then clip the plausible range.
     if "hv216" in df.columns:
-        out["hv216"] = df["hv216"].clip(0, 10).astype(float)
+        rooms = df["hv216"].where(df["hv216"] < 25, other=np.nan)
+        out["sleeping_rooms"] = rooms.clip(0, 10).astype(float)
 
-    # 3. Recoded categoricals → binary "improved" indicators
+    # 3. Recoded categoricals → binary "improved" / "finished" indicators
     if "hv201" in df.columns:
         out["improved_water"] = _is_in_set(df["hv201"], IMPROVED_WATER_CODES)
     if "hv205" in df.columns:
@@ -234,9 +243,10 @@ def pooled_wealth_index(
     pc1 = (pc1 - pc1.mean()) / pc1.std(ddof=0)
 
     # 7. Sign convention: positive PC1 = wealthier.
-    # Force "has electricity" to load positively as a sanity convention.
-    if "hv206" in feature_cols:
-        elec_idx = feature_cols.index("hv206")
+    # Force "has_electricity" to load positively as a sanity convention.
+    # (Pinned to the semantic name set by extract_asset_features.)
+    if "has_electricity" in feature_cols:
+        elec_idx = feature_cols.index("has_electricity")
         if pca.components_[0, elec_idx] < 0:
             pc1 = -pc1
             pca.components_ = -pca.components_
