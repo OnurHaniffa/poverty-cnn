@@ -82,7 +82,8 @@ def main() -> None:
         description="Submit DHS-cluster 8-channel tile exports to Google Drive via Earth Engine."
     )
     parser.add_argument("--country", required=True, help="Country code, e.g. KE")
-    parser.add_argument("--year", type=int, required=True, help="DHS survey year, e.g. 2014")
+    parser.add_argument("--year", type=int, default=None,
+                        help="DHS survey year. If omitted, read per-cluster from the GPS DHSYEAR field (recommended).")
     parser.add_argument("--gps", required=True, help="Path to the DHS GPS .shp file")
     parser.add_argument("--drive-folder", default="poverty_cnn_data", help="Google Drive output folder")
     parser.add_argument("--manifest", default=None,
@@ -118,13 +119,18 @@ def main() -> None:
             skipped_zero += 1
             continue
 
-        cluster_id = f"{args.country}_{dhsclust}_{args.year}"
+        # Survey year: explicit --year if given, otherwise read it straight
+        # from the GPS DHSYEAR field. Reading from the data avoids relying on a
+        # caller-supplied year map (which silently broke once on macOS bash 3.2).
+        year = args.year if args.year is not None else int(row["DHSYEAR"])
+
+        cluster_id = f"{args.country}_{dhsclust}_{year}"
         if cluster_id in already:
             skipped_done += 1
             continue
 
         task = submit_with_retry(
-            lat=lat, lon=lon, year=args.year,
+            lat=lat, lon=lon, year=year,
             cluster_id=cluster_id, drive_folder=args.drive_folder,
         )
         append_manifest(manifest_path, {
