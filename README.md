@@ -45,28 +45,32 @@ Requires a Google Earth Engine account (free, ~1 day approval): [earthengine.goo
 
 DHS asset survey data requires registration (free, 1–3 day approval): [dhsprogram.com](https://dhsprogram.com/data/new-user-registration.cfm). Single application covers all 23 sub-Saharan African countries used in this project.
 
-### 4. Run the pipeline
+### 4. Use the package
 
-```bash
-# Compute the pooled asset wealth index from DHS surveys
-python scripts/02_compute_wealth_index.py
+The project is under active development. As of this commit, the importable package
+exposes the data-loading half of the pipeline:
 
-# Download Landsat + nightlights tiles via Earth Engine (24-48h background download)
-python scripts/03_download_imagery.py
-
-# Build the PyTorch dataset
-python scripts/04_build_dataset.py
-
-# Hyperparameter search (Optuna, 20 trials)
-python scripts/06_hparam_search.py
-
-# Train the final 5-fold cross-country model
-python scripts/05_train.py --config configs/best.yaml --cv 5fold-country
-
-# Evaluate
-python scripts/07_evaluate.py
-python scripts/08_fairness_audit.py
+```python
+from poverty_cnn.data.dhs import (
+    load_dhs_hr,
+    load_dhs_pr_as_hr,
+    load_dhs_gps,
+    extract_asset_features,
+    pooled_wealth_index,
+)
+from poverty_cnn.data.earth_engine import (
+    init_ee,
+    cluster_image,
+    download_cluster_tile_direct,
+    export_cluster_to_drive,
+)
 ```
+
+CLI entry-points (`scripts/0X_*.py`) for the full end-to-end pipeline —
+imagery download, dataset build, training, evaluation, fairness audit — will
+land as the corresponding modules under `src/poverty_cnn/` are completed.
+See [`docs/tasks.md`](docs/tasks.md) for current progress and
+[`docs/design.md`](docs/design.md) §11 for the planned timeline.
 
 ## Data sources
 

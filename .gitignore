@@ -46,6 +46,7 @@ data/processed/
 results/checkpoints/
 results/predictions/
 results/figures/
+results/*.csv          # extraction manifests / run logs (machine-local state)
 *.ckpt
 
 # Logging
