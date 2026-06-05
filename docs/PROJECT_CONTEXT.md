@@ -1,7 +1,7 @@
 # Project Context — full narrative
 
-A complete catch-up document for a fresh Claude Code session or a new collaborator.
-For the operational guide see `CLAUDE.md`; for the authoritative plan see `docs/design.md`.
+A complete catch-up document for a new collaborator or a fresh working session.
+For the authoritative plan see `docs/design.md`.
 
 Last updated: 2026-05-14 (end of Day 5 work).
 
@@ -107,7 +107,7 @@ Plus a stretch goal: bias-amplification simulation. Full detail in `docs/design.
 | Use Kenya 2014 (not 2022) as the sandbox country | Yeh used the 2009–2017 data window; 2022 is DHS-8 with different variable codes and breaks apples-to-apples |
 | Use the Person Recode file deduped to households | DHS bundled PR instead of HR; asset variables are household-level anyway, so dedup recovers the HR rows. Saves a re-download. |
 
-## 9. Gotchas / lessons (also in CLAUDE.md)
+## 9. Gotchas / lessons
 
 - Conda not shell-initialized — use full paths to env binaries.
 - mamba's `pip:` section in environment.yml failed silently — pip-install those packages manually.
@@ -131,7 +131,6 @@ Then Week 2 = model + training on the school GPU server.
 
 ```
 poverty-cnn/
-├── CLAUDE.md                 operational guide (auto-loaded each session)
 ├── README.md                 public-facing project overview
 ├── environment.yml           conda env spec (numpy<2 pinned)
 ├── pyproject.toml            editable-install package metadata

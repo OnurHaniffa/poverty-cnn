@@ -35,7 +35,7 @@ See [`design.md`](design.md) for the full design and timeline, and
 | 3 | May 11 (Mon) | Pull DHS for all 23 countries; pooled PCA wealth index; verify against WILDS | 🟡 wealth-index code done; only Kenya downloaded so far |
 | 4 | May 12 (Tue) | DHS + EE approvals come through; env fixes (numpy<2, pip retries) | ✅ |
 | 5 | May 13 (Wed) | Data pipeline modules written + Kenya end-to-end tested (1,594 clusters, 0.99σ urban/rural gap, 2 tiles downloaded) | ✅ |
-| 6 | May 14 (Thu) | CLAUDE.md + PROJECT_CONTEXT.md added for session continuity | ✅ |
+| 6 | May 14 (Thu) | PROJECT_CONTEXT.md added for session continuity | ✅ |
 | 7 | May 15 (Fri) | **Hard checkpoint day.** Outstanding: SSH server access, bulk EE extraction, `dataset.py`, `splits.py`, WILDS parity check | 🟡 in progress |
 
 ## Week 2 — replication and main result (May 16–22)
