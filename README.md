@@ -6,14 +6,14 @@ A modernized replication and fairness audit of Yeh et al. (2020), *Nature Commun
 
 ## What this is
 
-This project does four things:
+A clean PyTorch 2.x reimplementation of Yeh et al. (2020), whose original code is in the now-unmaintained TensorFlow 1.15. There are four goals, in roughly this order:
 
-1. **Replicates** Yeh et al. 2020's headline result (mean cross-country r² = 0.70) on a clean PyTorch 2.x reimplementation of their TensorFlow 1.15 codebase.
-2. **Extends** Aiken, Rolf, Blumenstock 2023 (*IJCAI*) urban-rural fairness audit from 10 countries to all 23.
-3. **Novel — adds uncertainty-aware fairness analysis.** Uses MC-dropout to estimate per-cluster prediction uncertainty, shows that uncertainty itself is unequally distributed across urban/rural strata, and proposes an uncertainty-aware aid allocation rule.
-4. **Novel — adds temporal fairness drift analysis.** Trains on early DHS surveys (Period 1+2: 2009–2014), evaluates on later (Period 3: 2015–2017+), and shows how the urban-rural fairness gap evolves over time.
+1. **Replicate** the paper's headline result — mean cross-country r² ≈ 0.70 — from scratch.
+2. **Extend** the Aiken, Rolf & Blumenstock (2023, *IJCAI*) urban–rural fairness audit from their 10 countries to all 23.
+3. **Add an uncertainty angle** (novel): use MC-dropout to estimate per-cluster prediction uncertainty, then check whether that uncertainty is itself unevenly spread across urban/rural strata — and if so, what an uncertainty-aware aid-allocation rule would do about it.
+4. **Add a temporal angle** (novel): train on the earlier DHS surveys (2009–2014), test on the later ones (2015–2017), and see whether the urban–rural gap widens over time.
 
-Design and methodology document: [`docs/design.md`](docs/design.md) (mirror of the spec at `ivory-ai/docs/superpowers/specs/2026-05-08-poverty-cnn-internship-design.md`).
+Status: the replication pipeline (data → CNN → cross-country CV) is the current focus. Goals 3 and 4 are planned extensions, not yet run — so don't read the bullets above as finished results. [`docs/tasks.md`](docs/tasks.md) tracks where things actually stand; [`docs/design.md`](docs/design.md) has the full methodology.
 
 ## Replicated papers
 
@@ -47,30 +47,20 @@ DHS asset survey data requires registration (free, 1–3 day approval): [dhsprog
 
 ### 4. Use the package
 
-The project is under active development. As of this commit, the importable package
-exposes the data-loading half of the pipeline:
+The package now covers the data and modeling pieces end to end:
 
 ```python
-from poverty_cnn.data.dhs import (
-    load_dhs_hr,
-    load_dhs_pr_as_hr,
-    load_dhs_gps,
-    extract_asset_features,
-    pooled_wealth_index,
-)
-from poverty_cnn.data.earth_engine import (
-    init_ee,
-    cluster_image,
-    download_cluster_tile_direct,
-    export_cluster_to_drive,
-)
+from poverty_cnn.data.dhs import extract_asset_features, pooled_wealth_index
+from poverty_cnn.data.dataset import PovertyTileDataset, make_fold_loaders  # (image, wealth) pairs
+from poverty_cnn.data.splits import fold_ids                                # 5-fold cross-country CV
+from poverty_cnn.models.poverty_resnet import PovertyResNet                 # 8-channel ResNet-18
+from poverty_cnn.training.train import train_fold                           # Adam + MSE, early stopping
 ```
 
-CLI entry-points (`scripts/0X_*.py`) for the full end-to-end pipeline —
-imagery download, dataset build, training, evaluation, fairness audit — will
-land as the corresponding modules under `src/poverty_cnn/` are completed.
-See [`docs/tasks.md`](docs/tasks.md) for current progress and
-[`docs/design.md`](docs/design.md) §11 for the planned timeline.
+Stage scripts live in `scripts/`, numbered by pipeline order (wealth index → imagery →
+tile cache → train → evaluate → hparam search). The `eval/` modules (fairness, uncertainty,
+temporal drift, targeting) are still being filled in — see [`docs/tasks.md`](docs/tasks.md)
+for current progress.
 
 ## Data sources
 
