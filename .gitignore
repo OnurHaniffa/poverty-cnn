@@ -77,3 +77,16 @@ dist/
 *.egg-info/
 private/
 mamba*
+
+# DHS session credential + OOD raw microdata (never commit)
+cookies.txt
+data/raw/dhs_ood/
+data/raw/dhs_ood_manifest.csv
+
+# brainstorming visual-companion mockups
+.superpowers/
+
+# Deck build artifacts (regenerable from deck/*.py; the PDF is committed)
+deck/slides/
+deck/__pycache__/
+node_modules/

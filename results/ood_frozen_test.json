@@ -1,0 +1,110 @@
+{
+  "36k_full": {
+    "axis": "multiround axis (exact)",
+    "overall": {
+      "r2": 0.476,
+      "mae": 0.59,
+      "spearman": 0.726,
+      "pearson": 0.742,
+      "n": 2800
+    },
+    "per_country": {
+      "GA": {
+        "r2": 0.544,
+        "mae": 0.314,
+        "spearman": 0.813,
+        "pearson": 0.817,
+        "n": 377
+      },
+      "MD": {
+        "r2": 0.605,
+        "mae": 0.416,
+        "spearman": 0.662,
+        "pearson": 0.834,
+        "n": 650
+      },
+      "NI": {
+        "r2": 0.624,
+        "mae": 0.401,
+        "spearman": 0.711,
+        "pearson": 0.897,
+        "n": 207
+      },
+      "NM": {
+        "r2": 0.194,
+        "mae": 0.658,
+        "spearman": 0.649,
+        "pearson": 0.669,
+        "n": 550
+      },
+      "SZ": {
+        "r2": -0.646,
+        "mae": 0.747,
+        "spearman": 0.72,
+        "pearson": 0.696,
+        "n": 270
+      },
+      "ZA": {
+        "r2": -1.709,
+        "mae": 0.825,
+        "spearman": 0.484,
+        "pearson": 0.483,
+        "n": 746
+      }
+    }
+  },
+  "13k_pilot": {
+    "axis": "single-round axis (use Spearman to compare)",
+    "overall": {
+      "r2": 0.502,
+      "mae": 0.58,
+      "spearman": 0.734,
+      "pearson": 0.744,
+      "n": 2800
+    },
+    "per_country": {
+      "GA": {
+        "r2": 0.461,
+        "mae": 0.349,
+        "spearman": 0.809,
+        "pearson": 0.773,
+        "n": 377
+      },
+      "MD": {
+        "r2": 0.54,
+        "mae": 0.457,
+        "spearman": 0.644,
+        "pearson": 0.82,
+        "n": 650
+      },
+      "NI": {
+        "r2": 0.472,
+        "mae": 0.491,
+        "spearman": 0.596,
+        "pearson": 0.872,
+        "n": 207
+      },
+      "NM": {
+        "r2": 0.306,
+        "mae": 0.614,
+        "spearman": 0.673,
+        "pearson": 0.675,
+        "n": 550
+      },
+      "SZ": {
+        "r2": -0.15,
+        "mae": 0.608,
+        "spearman": 0.712,
+        "pearson": 0.711,
+        "n": 270
+      },
+      "ZA": {
+        "r2": -1.63,
+        "mae": 0.795,
+        "spearman": 0.493,
+        "pearson": 0.486,
+        "n": 746
+      }
+    }
+  }
+}

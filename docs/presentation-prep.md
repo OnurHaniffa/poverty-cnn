@@ -421,6 +421,23 @@ The Day 5 Kenya test used the sync path (2 tiles, wanted locally, immediately). 
 - **Seam 1 — extraction time** (`scripts/03_download_imagery.py`, not yet written): loop over the DHS GPS DataFrame, call `export_cluster_to_drive(lat=row.LATNUM, lon=row.LONGNUM, year=..., cluster_id=...)`. The cluster_id is baked into the output filename.
 - **Seam 2 — training time** (`data/dataset.py`, not yet written): the PyTorch Dataset joins the `.tif` files (by cluster_id in filename) to the wealth DataFrame (by cluster_id column), returning `(image, wealth)` pairs.
 
+### Does excluding wealthy countries (South Africa, etc.) bias the PCA toward poorer countries?
+
+**The question:** The pooled PCA is fit on the 23 sub-Saharan core countries; the wealthy OOD countries (South Africa, Namibia, Gabon...) are held out. Doesn't that bias the wealth axis and make the index "bad" on those countries?
+
+**Why it matters:** Prime advisor question; goes to the heart of the OOD-test design.
+
+**Answer — separate two claims:**
+- *"The PCA axis is biased toward the poor"* — mostly **not** true. PC1 captures a single modern-infrastructure/SES factor (electricity–TV–fridge–finished-housing co-occur), and that covariance structure is stable across SSA, so adding wealthy countries shifts the mean / adds top-end variance but barely rotates the axis. The feature space also has a **ceiling**: built from ~15 *binary* assets, so the richest possible household is "all assets = 1" — wealthy countries don't open a new region, the 23 already contain maxed-out urban-elite households (Nairobi/Lagos/Accra). Ruler analogy: a 2 m ruler; the rich peg the top.
+- *"The index/model performs worse on wealthy OOD countries"* — **true, and intended.** When an asset saturates (electricity ≈ 100% in South Africa) it stops discriminating wealth *within* that country, yet the frozen axis still weights it (0.374, learned from SSA). So the index compresses rich households together at the top (ceiling/compression). **Inherent to asset indices in wealthy populations — happens whether or not those countries are in the fit.** DHS's own index is famously weak at separating the rich from the very rich.
+
+**Why we freeze the axis anyway (and must):**
+- **Comparability:** one recipe = one ruler; "+1" must mean the same thing in every country. Refitting per experiment swaps rulers.
+- **Faithfulness / no leakage:** textbook "fit preprocessing on train, transform test." OOD countries are *test* — project them onto the train-fit axis (reuse the saved 23-country mean/std + PC1 loadings), never refit.
+- **It's the point of the OOD test:** "r² drops on wealthy OOD countries, partly from the asset ceiling" is a *finding* about generalization limits + the index's fairness across the wealth spectrum (it measures the poor more precisely than the rich) — not a bug. The core 23-country result is unaffected; all 23 are in the fit, mutually comparable.
+
+**Run numbers (2026-05-21):** 355,445 households pooled → 13,634 clusters; PC1 = 28.7% variance; every asset loads positive (sign convention held); `has_bicycle ≈ 0` (wealth-neutral in SSA); urban/rural gap = 1.158σ.
+
 ---
 
 ## To be added (these come up in later modules)
@@ -437,4 +454,4 @@ As we walk through `dataset.py`, the model code, training, and the fairness audi
 
 ---
 
-*Last updated: end of `earth_engine.py` walkthrough (both data modules now fully covered). Will keep growing as we move through the codebase.*
+*Last updated: pooled wealth index computed across all 23 countries (355,445 households → 13,634 clusters, PC1 = 28.7% variance, urban/rural gap 1.158σ); added the wealthy-OOD-countries PCA-bias Q&A. Will keep growing as we move through the codebase.*

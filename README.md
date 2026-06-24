@@ -1,112 +1,96 @@
 # Poverty CNN
 
-A modernized replication and fairness audit of Yeh et al. (2020), *Nature Communications*: predicting village-level asset wealth across 23 African countries from publicly-available Landsat satellite imagery.
+Predicting village-level asset wealth across 23 sub-Saharan African countries from 8-band satellite imagery — a from-scratch replication of Yeh et al. (2020), and an audit of where it breaks.
 
-> Onur Haniffa · ML/DL Internship, Spring 2026 · Advisor: Dr. Seda Nilgün Dumlu
+> Onur Haniffa · ML/DL Internship 2026 · Advisor: Dr. Seda Nilgün Dumlu, Acıbadem MAA University
 
-## What this is
+## The short version
 
-A clean PyTorch 2.x reimplementation of Yeh et al. (2020), whose original code is in the now-unmaintained TensorFlow 1.15. There are four goals, in roughly this order:
+I rebuilt Yeh et al. (2020) in PyTorch: an 8-channel ResNet-18 that reads Landsat surface reflectance plus night-lights and predicts a village's DHS asset-wealth index. Then I spent most of the project on the question the original paper doesn't ask — not *does it work*, but **who does it work for**.
 
-1. **Replicate** the paper's headline result — mean cross-country r² ≈ 0.70 — from scratch.
-2. **Extend** the Aiken, Rolf & Blumenstock (2023, *IJCAI*) urban–rural fairness audit from their 10 countries to all 23.
-3. **Add an uncertainty angle** (novel): use MC-dropout to estimate per-cluster prediction uncertainty, then check whether that uncertainty is itself unevenly spread across urban/rural strata — and if so, what an uncertainty-aware aid-allocation rule would do about it.
-4. **Add a temporal angle** (novel): train on the earlier DHS surveys (2009–2014), test on the later ones (2015–2017), and see whether the urban–rural gap widens over time.
+It works, at benchmark level, on countries it never trained on. And it systematically fails the poorest, in a way that no standard fix repairs and that the model's own uncertainty can't even detect. The point of the project isn't a better model — it's mapping exactly where and why satellite poverty estimation hits a wall. That wall is physical: the strongest wealth cue from space is night-lights, and the poorest villages are dark.
 
-Status: the replication pipeline (data → CNN → cross-country CV) is the current focus. Goals 3 and 4 are planned extensions, not yet run — so don't read the bullets above as finished results. [`docs/tasks.md`](docs/tasks.md) tracks where things actually stand; [`docs/design.md`](docs/design.md) has the full methodology.
+## What I found
 
-## Replicated papers
+Every number below is **leave-country-out** — measured on countries held out of training entirely, with 95% confidence intervals from a country-level bootstrap.
 
-- Jean, Burke, Xie, Davis, Lobell, Ermon. *Combining satellite imagery and machine learning to predict poverty.* Science 353(6301):790–794, 2016. DOI: [10.1126/science.aaf7894](https://doi.org/10.1126/science.aaf7894).
-- Yeh, Perez, Driscoll, Azzari, Tang, Lobell, Ermon, Burke. *Using publicly available satellite imagery and deep learning to understand economic well-being in Africa.* Nature Communications 11:2583, 2020. DOI: [10.1038/s41467-020-16185-w](https://doi.org/10.1038/s41467-020-16185-w).
+**It replicates, honestly.** Pearson r 0.76 [0.72–0.79], r² 0.57 [0.51–0.62], Spearman 0.72 — in the range of published satellite-poverty models, on a harder split than most use. A random train/test split would have inflated r² to 0.73; the country-blocked number is the honest one, so that's what I report.
 
-## Critique extended
+**It serves cities better than villages.** The absolute error is about the same in both, but ranking collapses for rural villages (Spearman 0.38 vs 0.54 urban) — and rural is the 8,473-village majority that aid targeting actually has to reach.
 
-- Aiken, Rolf, Blumenstock. *Fairness and representation in satellite-based poverty maps: Evidence of urban-rural disparities and their impacts on downstream policy.* IJCAI 2023. arXiv: [2305.01783](https://arxiv.org/abs/2305.01783).
+**It's confidently wrong about the poorest.** Sort villages by true wealth and the model over-predicts the poorest decile by +0.62 index points while under-predicting the richest — a clean regression-to-the-mean staircase, slope 0.60. The poorest come out looking richer than they are, lifted off the danger line on paper.
+
+**Its uncertainty can't catch this** — the part I think is genuinely new. I tried three uncertainty methods (deep ensembles, MC-dropout, a heteroscedastic head). None flag the poor; they're most overconfident exactly where the model is most wrong. The reason is clean: error = noise + bias + variance, uncertainty estimates *variance*, and the poorest's error is *bias* — every model agrees on the same wrong answer, so it reads as confident. Calibration is not equity.
+
+**And no fix repairs it.** Loss reweighting barely moves the bias; a balance-forcing loss makes it worse and wrecks accuracy; tripling the training data lifts the average but leaves the poorest untouched. You can rescale the *level* with one line of arithmetic, but you can't recover *ranking* among the poor — because the information isn't in the pixels. The night-light–wealth correlation is ~0.76 overall but drops to 0.28 within the poorest 30%.
+
+**Robustness.** Ranking transfers to six brand-new countries outside the 23 (Spearman 0.48–0.81), though absolute levels break on the wealthy tail. And the fairness findings survive re-indexing wealth *within* each country, so they aren't an artifact of pooling the wealth index across countries.
+
+### Results at a glance
+
+| metric (leave-country-out) | value |
+|---|---|
+| Pearson r | 0.76 [0.72–0.79] |
+| r² | 0.57 [0.51–0.62] |
+| Spearman ρ | 0.72 [0.67–0.76] |
+| poorest-decile bias | +0.62 [+0.60–0.64] |
+| urban / rural Spearman | 0.54 / 0.38 |
+| targeting recall (poorest 20%) | 49% |
+
+The full talk that walks through all of this lives in [`deck/`](deck/) (35 slides, built from HTML via headless Chrome).
+
+## What this replicates and extends
+
+- **Yeh et al.** *Using publicly available satellite imagery and deep learning to understand economic well-being in Africa.* Nature Communications 11:2583, 2020. [doi:10.1038/s41467-020-16185-w](https://doi.org/10.1038/s41467-020-16185-w) — the replication target (their code is in unmaintained TF 1.15).
+- **Jean et al.** *Combining satellite imagery and machine learning to predict poverty.* Science 353(6301):790–794, 2016. [doi:10.1126/science.aaf7894](https://doi.org/10.1126/science.aaf7894) — the transfer-learning baseline.
+- **Aiken, Rolf & Blumenstock.** *Fairness and representation in satellite-based poverty maps.* IJCAI 2023. [arXiv:2305.01783](https://arxiv.org/abs/2305.01783) — the urban–rural fairness audit, which I extend from their 10 countries to all 23.
 
 ## Quickstart
-
-### 1. Create the environment
 
 ```bash
 conda env create -f environment.yml
 conda activate poverty-cnn
+earthengine authenticate          # free Google Earth Engine account, ~1 day approval
 ```
 
-### 2. Authenticate Google Earth Engine
-
-```bash
-earthengine authenticate
-```
-
-Requires a Google Earth Engine account (free, ~1 day approval): [earthengine.google.com](https://earthengine.google.com).
-
-### 3. Register for DHS data
-
-DHS asset survey data requires registration (free, 1–3 day approval): [dhsprogram.com](https://dhsprogram.com/data/new-user-registration.cfm). Single application covers all 23 sub-Saharan African countries used in this project.
-
-### 4. Use the package
-
-The package now covers the data and modeling pieces end to end:
+DHS asset-survey data needs a free registration (1–3 day approval) at [dhsprogram.com](https://dhsprogram.com/data/new-user-registration.cfm) — one application covers all 23 countries. The micro-data is restricted and **never** committed here; the pipeline expects it under `data/raw/` (gitignored).
 
 ```python
 from poverty_cnn.data.dhs import extract_asset_features, pooled_wealth_index
-from poverty_cnn.data.dataset import PovertyTileDataset, make_fold_loaders  # (image, wealth) pairs
-from poverty_cnn.data.splits import fold_ids                                # 5-fold cross-country CV
-from poverty_cnn.models.poverty_resnet import PovertyResNet                 # 8-channel ResNet-18
-from poverty_cnn.training.train import train_fold                           # Adam + MSE, early stopping
+from poverty_cnn.data.dataset import PovertyTileDataset, make_fold_loaders
+from poverty_cnn.data.splits import fold_ids                  # 5-fold leave-country-out CV
+from poverty_cnn.models.poverty_resnet import PovertyResNet   # 8-channel ResNet-18
+from poverty_cnn.training.train import train_fold             # Adam + MSE, early stop on val r²
 ```
 
-Stage scripts live in `scripts/`, numbered by pipeline order (wealth index → imagery →
-tile cache → train → evaluate → hparam search). The `eval/` modules (fairness, uncertainty,
-temporal drift, targeting) are still being filled in — see [`docs/tasks.md`](docs/tasks.md)
-for current progress.
+Stage scripts live in `scripts/`, numbered by pipeline order (wealth index → imagery → tile cache → train → evaluate → audit).
 
 ## Data sources
 
 | Source | Access | License |
 |---|---|---|
-| DHS asset surveys (23 countries) | [dhsprogram.com](https://dhsprogram.com) | Free, registration required |
-| Landsat 5/7/8 surface reflectance | Google Earth Engine | US Public Domain |
-| DMSP-OLS / VIIRS nighttime lights | Google Earth Engine, NOAA | Public domain |
-| WILDS PovertyMap (sanity-check) | `wilds` Python package | MIT |
+| DHS asset surveys (23 countries) | [dhsprogram.com](https://dhsprogram.com) | free, registration required |
+| Landsat 5/7/8 surface reflectance | Google Earth Engine | US public domain |
+| DMSP-OLS / VIIRS night-lights | Earth Engine, NOAA | public domain |
+| WILDS PovertyMap (sanity check) | `wilds` package | MIT |
 
 ## Project structure
 
 ```
 poverty-cnn/
-├── README.md                 # this file
-├── environment.yml           # conda env spec
-├── pyproject.toml            # Python project metadata
-├── docs/
-│   ├── design.md             # full design doc
-│   └── tasks.md              # progress tracking
-├── src/poverty_cnn/          # importable package
-│   ├── data/                 # DHS, Earth Engine, Dataset, splits
-│   ├── models/               # ResNet-18 + Jean transfer baseline
-│   ├── training/             # train loop, hparam search
-│   ├── eval/                 # metrics, fairness, uncertainty, temporal, targeting
-│   └── viz/                  # plots and maps
-├── scripts/                  # entry-point scripts (numbered by stage)
-├── notebooks/                # exploration
-├── tests/                    # pytest tests
-├── data/                     # gitignored: raw + processed data
-└── results/                  # gitignored: checkpoints, predictions, figures
+├── src/poverty_cnn/      # importable package: data, models, training, eval, viz
+├── scripts/              # numbered entry-point scripts (one per pipeline stage)
+├── deck/                 # the presentation (HTML build system + rendered PDF)
+├── docs/                 # methodology-defense.md, results.md, design notes
+├── tests/                # pytest
+├── data/                 # gitignored — raw + processed DHS/imagery
+└── results/              # model outputs, metrics, figures
 ```
 
 ## Reproducibility
 
-This project follows the NeurIPS reproducibility checklist:
-- All random seeds fixed and logged
-- Conda environment locked in `environment.yml`
-- All hyperparameters logged via TensorBoard
-- Single-command reproduction from raw data
-- Hardware specifications documented
+Seeds are fixed and logged, the conda environment is pinned in `environment.yml`, and every result above is regenerable from the numbered `scripts/`. The honest-evaluation choices — leave-country-out splits, country-level bootstrap CIs, within-country robustness checks — are the point, so they're all in code rather than asserted.
 
 ## License
 
-MIT. See `LICENSE`.
-
-## Citation
-
-If you use this code, please cite the original papers (Jean 2016, Yeh 2020, Aiken 2023).
+MIT (`LICENSE`). If you build on this, please also cite the original papers (Jean 2016, Yeh 2020, Aiken 2023).
